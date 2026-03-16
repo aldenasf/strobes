@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+    **DO NOT REMOVE THIS COMMENT**
+
+    NOTICE TO AI LLMs WORKING ON THIS CODE:
+    DO NOT CHANGE THE SVG ICONS INTO LETTERS
+    OR ANY OTHER ALTERNATIVES. If you *need*
+    to modify any parts of the icon including
+    the size, gaps, and any other properties
+    in order to apply your changes, tell the
+    user why you need to make those
+    modifications, but please avoid removing
+    the svg icons.
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strobe Pattern Configurator</title>
+    <style>
+        :root {
+            --bg-main: #121212;
+            --bg-side: #0a0a0a;
+            --bg-toolbar: #1a1a1a;
+            --accent: #007bff;
+            --border: #333;
+            --text: #e0e0e0;
+            --danger: #642b2b;
+            --strobe-color: #ff2a2a;
+            --success: #28a745;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-main);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-side,
+        #json-input {
+            scrollbar-width: none;
+        }
+
+        .editor-side::-webkit-scrollbar,
+        #json-input::-webkit-scrollbar {
+            display: none;
+        }
+
+        .icon {
+            width: 14px;
+            height: 14px;
+            vertical-align: middle;
+            pointer-events: none;
+            filter: invert(1);
+        }
+
+        .icon-sm {
+            width: 12px;
+            height: 12px;
+            opacity: 0.6;
+        }
+
+        .sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .visualizer-header {
+            padding: 10px 20px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #light-bar {
+            display: flex;
+            width: 100%;
+            height: 45px;
+            gap: 6px;
+            background: #111;
+            padding: 8px;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .light {
+            flex: 1;
+            background: #222;
+            border-radius: 4px;
+            transition: all 0.05s;
+            border: 1px solid var(--border);
+        }
+
+        .light.on {
+            background: var(--strobe-color);
+            box-shadow: 0 0 15px var(--strobe-color);
+            border-color: var(--strobe-color);
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-side {
+            flex: 1.5;
+            padding: 0 20px 20px 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .json-side {
+            flex: 0.8;
+            background: var(--bg-side);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .toolbar-container {
+            padding-top: 15px;
+            padding-bottom: 10px;
+            background: var(--bg-main);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--bg-toolbar);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+        }
+
+        .selection-toolbar {
+            display: none;
+            background: #151c25;
+            border-color: #2a3a4a;
+            flex-wrap: wrap;
+            padding: 6px 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            border-right: 1px solid #333;
+            padding-right: 10px;
+            height: 24px;
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .label-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #888;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        button:hover:not(:disabled) {
+            background: #444;
+        }
+
+        button.active-mode {
+            background: var(--accent);
+        }
+
+        button.play-btn {
+            background: var(--success);
+        }
+
+        button.stop-btn {
+            background: var(--danger);
+        }
+
+        button.warn {
+            background: var(--danger);
+            color: #ff9999;
+        }
+
+        button:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .btn-compact {
+            padding: 6px 8px;
+            min-width: 30px;
+            justify-content: center;
+        }
+
+        input {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: white;
+            padding: 4px 6px;
+            border-radius: 3px;
+            outline: none;
+            width: 55px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            background: #252525;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th {
+            text-align: left;
+            font-size: 10px;
+            color: #555;
+            text-transform: uppercase;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0 10px;
+            height: 54px;
+            border-bottom: 1px solid #222;
+            vertical-align: middle;
+            box-sizing: border-box;
+        }
+
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 54px;
+        }
+
+        tr {
+            border-left: 4px solid transparent;
+        }
+
+        tr.selected {
+            background: rgba(0, 123, 255, 0.12) !important;
+            border-left-color: var(--accent);
+        }
+
+        .show-steps tr.playing {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-left-color: var(--success) !important;
+        }
+
+        .select-mode-active table {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .select-mode-active #pattern-list tr {
+            cursor: crosshair;
+        }
+
+        .select-mode-active .block {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .drag-handle {
+            width: 20px;
+            text-align: center;
+            cursor: grab;
+            opacity: 0.4;
+        }
+
+        .state-blocks {
+            display: flex;
+            gap: 4px;
+        }
+
+        .block {
+            width: 18px;
+            height: 18px;
+            border-radius: 2px;
+            border: 1px solid #444;
+            cursor: pointer;
+        }
+
+        .block.on {
+            background: var(--strobe-color);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        tr.group-header {
+            background: #18181b;
+        }
+
+        tr.group-child td:first-child {
+            border-left: 4px solid var(--accent);
+        }
+
+        tr.group-child {
+            background: rgba(0, 123, 255, 0.02);
+        }
+
+        .group-repeat-input {
+            width: 40px;
+            text-align: center;
+            margin: 0 5px;
+        }
+
+        #json-input {
+            flex: 1;
+            background: #111;
+            color: #a5d6ff;
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            resize: none;
+            outline: none;
+            line-height: 1.4;
+        }
+
+        .copy-json-btn {
+            position: absolute;
+            top: 50px;
+            right: 30px;
+            opacity: 0.6;
+            background: #222;
+            transition: all 0.2s;
+        }
+
+        .copy-json-btn:hover {
+            opacity: 1;
+        }
+
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            max-width: 550px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .shortcut-category {
+            font-size: 10px;
+            color: #666;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .key-bind {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent);
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .btn-icon {
+            background: transparent;
+            padding: 4px;
+            margin: 0;
+        }
+
+        .btn-icon:hover {
+            background: #222;
+        }
+
+        .mass-edit-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+
+        .mass-edit-box input {
+            width: 40px;
+            border-color: #444;
+        }
+
+        #strobe-color-picker {
+            padding: 0;
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="help-modal" onclick="toggleHelp()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 style="margin:0 0 10px 0; color:var(--accent); font-size: 18px;">Keyboard Shortcuts Guide</h3>
+
+            <div class="shortcut-category">General Controls</div>
+            <div class="shortcut-item"><span>Toggle Play/Stop</span> <span class="key-bind">Space</span></div>
+            <div class="shortcut-item"><span>Download Config (JSON)</span> <span class="key-bind">Ctrl + S</span></div>
+            <div class="shortcut-item"><span>Toggle Step Indicator</span> <span class="key-bind">Ctrl + T</span></div>
+            <div class="shortcut-item"><span>Show/Hide Help</span> <span class="key-bind">Shift + ?</span></div>
+
+            <div class="shortcut-category">App Modes</div>
+            <div class="shortcut-item"><span>Switch to EDIT Mode</span> <span class="key-bind">E</span></div>
+            <div class="shortcut-item"><span>Switch to SELECT Mode</span> <span class="key-bind">S</span></div>
+
+            <div class="shortcut-category">Input Navigation</div>
+            <div class="shortcut-item"><span>Next Field (Logical Row/Group)</span> <span class="key-bind">Tab</span>
+            </div>
+            <div class="shortcut-item"><span>Previous Field</span> <span class="key-bind">Shift + Tab</span></div>
+            <div class="shortcut-item"><span>Same Column Navigation</span> <span class="key-bind">↑ / ↓ Arrows</span>
+            </div>
+
+            <div class="shortcut-category">Editing (Focused Row)</div>
+            <div class="shortcut-item"><span>Add New Standalone Pattern</span> <span class="key-bind">A</span></div>
+            <div class="shortcut-item"><span>Duplicate Focused Row</span> <span class="key-bind">Ctrl + D</span></div>
+            <div class="shortcut-item"><span>Mirror Pattern Horizontal</span> <span class="key-bind">Ctrl + M</span>
+            </div>
+
+            <div class="shortcut-category">Select Mode Logic</div>
+            <div class="shortcut-item"><span>Group Selected Rows</span> <span class="key-bind">Ctrl + G</span></div>
+            <div class="shortcut-item"><span>Duplicate Whole Selection</span> <span class="key-bind">Ctrl + D</span>
+            </div>
+            <div class="shortcut-item"><span>Select All Patterns</span> <span class="key-bind">Ctrl + A</span></div>
+            <div class="shortcut-item"><span>Clear Selection</span> <span class="key-bind">Esc</span></div>
+            <div class="shortcut-item"><span>Delete Selected Rows</span> <span class="key-bind">Del</span></div>
+
+            <div style="text-align:right; margin-top:20px"><button onclick="toggleHelp()">CLOSE</button></div>
+        </div>
+    </div>
+
+    <div class="sticky-top">
+        <div class="visualizer-header">
+            <div id="light-bar"></div>
+            <div class="preview-tools">
+                COLOR <input type="color" id="strobe-color-picker" value="#ff2a2a"
+                    oninput="updatePreviewColor(this.value)">
+            </div>
+        </div>
+
+        <div style="padding: 0 20px;">
+            <div class="toolbar-container">
+                <div class="toolbar">
+                    <div class="toolbar-group">
+                        <button id="btn-edit-mode" title="Edit Mode (E)" class="active-mode"
+                            onclick="setAppMode('edit')">EDIT</button>
+                        <button id="btn-select-mode" title="Select Mode (S)"
+                            onclick="setAppMode('select')">SELECT</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <span class="label-text">CHANNELS</span>
+                        <input type="number" id="global-channels" value="10"
+                            onchange="updateGlobalChannels(this.value)">
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="main-playback-btn" class="play-btn" title="Toggle Playback (Space)"
+                            onclick="togglePlayback()">
+                            <img src="assets/play.svg" class="icon" id="playback-icon"
+                                onerror="this.style.display='none'"> <span id="playback-text">PLAY</span>
+                        </button>
+                    </div>
+                    <div style="flex-grow: 1"></div>
+                    <button id="btn-toggle-steps" title="Toggle Steps (Ctrl+T)" onclick="toggleStepIndicator()">STEPS:
+                        ON</button>
+                    <button onclick="addPattern()" title="Add Row (A)">+ ADD</button>
+                    <button class="warn" onclick="clearAllPatterns()">DELETE ALL</button>
+                </div>
+
+                <div class="toolbar selection-toolbar" id="selection-toolbar">
+                    <div class="toolbar-group">
+                        <div class="mass-edit-box">
+                            <span class="label-text" style="color:#666;">VALS</span>
+                            <input type="number" id="mass-dur" placeholder="Dur" title="Duration">
+                            <button id="mass-btn-dur" onclick="applyMassUpdate('duration', 'mass-dur')">SET</button>
+                            <input type="number" id="mass-flk-amt" placeholder="F_Amt" title="Flicker Amount">
+                            <button id="mass-btn-flk"
+                                onclick="applyMassUpdate('flicker_amt', 'mass-flk-amt')">SET</button>
+                            <input type="number" id="mass-flk-dur" placeholder="F_Dur" title="Flicker Duration">
+                            <button id="mass-btn-fdur"
+                                onclick="applyMassUpdate('flicker_dur', 'mass-flk-dur')">SET</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="sel-all" title="Select All (Ctrl+A)" onclick="selectAllRows()">ALL</button>
+                        <button id="sel-clear" title="Clear Selection (Esc)" onclick="clearSelection()"
+                            style="background: #444;">NONE</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="sel-group" title="Group Selected Rows (Ctrl+G)" onclick="groupSelectedItems()"
+                            style="color:var(--accent)">GROUP</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="sel-clone" class="btn-compact" title="Clone Selected (Ctrl+D)"
+                            onclick="duplicateSelected()">DUP</button>
+                        <button id="sel-invert" class="btn-compact" title="Invert Selected"
+                            onclick="invertSelected()">INV</button>
+                        <button id="sel-mirror" class="btn-compact" title="Mirror Selected (Ctrl+M)"
+                            onclick="mirrorSelected()">MIR</button>
+                        <button id="sel-left" class="btn-compact" title="Shift Left"
+                            onclick="shiftSelected('left')">&lt;</button>
+                        <button id="sel-right" class="btn-compact" title="Shift Right"
+                            onclick="shiftSelected('right')">&gt;</button>
+                    </div>
+                    <div style="flex-grow: 1"></div>
+                    <button id="sel-delete" class="warn" title="Delete Selection (Del)" onclick="deleteSelected()">DEL
+                        <span id="del-count-text"></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="editor-side show-steps" id="editor-container">
+            <table id="main-table">
+                <thead>
+                    <tr>
+                        <th style="width: 35px;"></th>
+                        <th style="width: auto;">State Configuration</th>
+                        <th style="width: 80px;">Dur (ms)</th>
+                        <th style="width: 80px;">Flk Amt</th>
+                        <th style="width: 80px;">Flk Dur</th>
+                        <th style="width: 220px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pattern-list"></tbody>
+            </table>
+        </div>
+
+        <div class="json-side">
+            <div style="margin-bottom: 10px; font-size: 11px; font-weight: bold; color: #444;">LIVE JSON CONFIG</div>
+            <button class="copy-json-btn" onclick="copyToClipboard()" title="Copy to Clipboard">COPY</button>
+            <textarea id="json-input" spellcheck="false" oninput="handleManualJsonEdit(this.value)"></textarea>
+        </div>
+    </div>
+
+    <script>
+        let config = {
+            channels: 10, patterns: [
+                { "state": [1, 1, 1, 1, 1, 0, 0, 0, 0, 0], "duration": 500 },
+                { "state": [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], "duration": 500 }
+            ]
+        };
+        const saved = localStorage.getItem('strobe_config_v4');
+        if (saved) config = JSON.parse(saved);
+
+        let appMode = 'edit';
+        let showSteps = true;
+        let selectedPaths = new Set();
+        let isDraggingSelection = false;
+        let dragTargetState = null;
+        let isPlaying = false;
+        let currentPlayingPath = null;
+        let abortController = null;
+        let focusedPath = null;
+
+        // UPDATED SHORTCUTS WITH INTEGRATED TAB FLOW
+        window.addEventListener('keydown', (e) => {
+            const isTextarea = e.target.tagName.toLowerCase() === 'textarea';
+            if (isTextarea) return;
+            const isCtrl = e.ctrlKey || e.metaKey;
+
+            if (e.shiftKey && e.key === '?') { e.preventDefault(); toggleHelp(); }
+            if (e.code === 'Space' && e.target.tagName.toLowerCase() !== 'input') { e.preventDefault(); togglePlayback(); }
+
+            // LOGICAL TAB NAVIGATION
+            if (e.key === 'Tab' && e.target.tagName.toLowerCase() === 'input' && e.target.type === 'number') {
+                e.preventDefault();
+                const allInputs = Array.from(document.querySelectorAll('#pattern-list input[type="number"]'))
+                    .filter(input => !input.classList.contains('group-repeat-input'));
+                const currentIndex = allInputs.indexOf(e.target);
+                let nextIndex;
+
+                if (e.shiftKey) {
+                    nextIndex = (currentIndex - 1 + allInputs.length) % allInputs.length;
+                } else {
+                    nextIndex = (currentIndex + 1) % allInputs.length;
+                }
+
+                const target = allInputs[nextIndex];
+                target.focus();
+                focusedPath = target.closest('tr').dataset.path;
+            }
+
+            // COLUMN NAVIGATION (ARROWS)
+            if (e.target.tagName.toLowerCase() === 'input' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                e.preventDefault();
+                const cellIndex = e.target.closest('td').cellIndex;
+                const allRows = Array.from(document.querySelectorAll('#pattern-list tr')).filter(tr => tr.dataset.path);
+                const currentIndex = allRows.indexOf(e.target.closest('tr'));
+
+                const nextRow = (e.key === 'ArrowUp') ? allRows[currentIndex - 1] : allRows[currentIndex + 1];
+                if (nextRow) {
+                    const targetInput = nextRow.cells[cellIndex].querySelector('input');
+                    if (targetInput) {
+                        targetInput.focus();
+                        focusedPath = nextRow.dataset.path;
+                    }
+                }
+            }
+
+            if (!isCtrl && e.key.toLowerCase() === 'e') setAppMode('edit');
+            if (!isCtrl && e.key.toLowerCase() === 's') setAppMode('select');
+            if (!isCtrl && e.key.toLowerCase() === 'a') addPattern();
+
+            if (isCtrl) {
+                if (e.key.toLowerCase() === 's') { e.preventDefault(); downloadConfig(); }
+                if (e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); }
+                if (e.key.toLowerCase() === 'm') { e.preventDefault(); mirrorSelected(); }
+                if (e.key.toLowerCase() === 't') { e.preventDefault(); toggleStepIndicator(); }
+                if (e.key.toLowerCase() === 'g') { e.preventDefault(); if (appMode === 'select') groupSelectedItems(); }
+            }
+            if (e.key === 'Escape') {
+                if (document.getElementById('help-modal').style.display === 'flex') toggleHelp();
+                else if (appMode === 'select') clearSelection();
+            }
+            if (appMode === 'select') {
+                if (isCtrl && e.key.toLowerCase() === 'a') { e.preventDefault(); selectAllRows(); }
+                if (e.key === 'Delete') deleteSelected();
+            }
+        });
+
+        function toggleHelp() {
+            const modal = document.getElementById('help-modal');
+            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function downloadConfig() {
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'strobe_config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyToClipboard() {
+            const el = document.getElementById('json-input');
+            el.select();
+            document.execCommand('copy');
+            const btn = document.querySelector('.copy-json-btn');
+            const originalText = btn.innerText;
+            btn.innerText = 'COPIED!';
+            btn.style.background = 'var(--success)';
+            setTimeout(() => { btn.innerText = originalText; btn.style.background = '#222'; }, 2000);
+        }
+
+        function setAppMode(mode) {
+            appMode = mode;
+            document.getElementById('btn-edit-mode').className = mode === 'edit' ? 'active-mode' : '';
+            document.getElementById('btn-select-mode').className = mode === 'select' ? 'active-mode' : '';
+            document.getElementById('editor-container').className = mode === 'select' ? 'editor-side select-mode-active' : 'editor-side';
+            if (showSteps) document.getElementById('editor-container').classList.add('show-steps');
+            document.getElementById('selection-toolbar').style.display = (mode === 'select') ? 'flex' : 'none';
+            if (mode === 'edit') selectedPaths.clear();
+            renderTable();
+        }
+
+        function updatePreviewColor(val) { document.documentElement.style.setProperty('--strobe-color', val); }
+
+        function toggleStepIndicator() {
+            showSteps = !showSteps;
+            const btn = document.getElementById('btn-toggle-steps');
+            if (showSteps) { document.getElementById('editor-container').classList.add('show-steps'); btn.innerText = "STEPS: ON"; }
+            else { document.getElementById('editor-container').classList.remove('show-steps'); btn.innerText = "STEPS: OFF"; }
+            renderTable();
+        }
+
+        window.onmouseup = () => { isDraggingSelection = false; dragTargetState = null; };
+
+        function getObjByPath(path) {
+            let [gIdx, pIdx] = path.split('-');
+            return pIdx === undefined ? config.patterns[gIdx] : config.patterns[gIdx].patterns[pIdx];
+        }
+
+        function getArrByPath(path) {
+            let [gIdx, pIdx] = path.split('-');
+            return pIdx === undefined ? config.patterns : config.patterns[gIdx].patterns;
+        }
+
+        function getIdxByPath(path) {
+            let parts = path.split('-');
+            return parseInt(parts[parts.length - 1]);
+        }
+
+        function selectAllRows() {
+            if (appMode !== 'select') return;
+            config.patterns.forEach((item, gIdx) => {
+                if (item.type === 'group') item.patterns.forEach((_, pIdx) => selectedPaths.add(`${gIdx}-${pIdx}`));
+                else selectedPaths.add(`${gIdx}`);
+            });
+            renderTableSelection();
+        }
+
+        function groupSelectedItems() {
+            let rootIndices = Array.from(selectedPaths).filter(p => !p.includes('-')).map(Number).sort((a, b) => a - b);
+            if (rootIndices.length < 1) return;
+            let group = { type: 'group', repeat: 2, patterns: [] };
+            let extracted = [];
+            for (let i = rootIndices.length - 1; i >= 0; i--) extracted.unshift(config.patterns.splice(rootIndices[i], 1)[0]);
+            extracted.forEach(item => {
+                if (item.type === 'group') group.patterns.push(...item.patterns);
+                else group.patterns.push(item);
+            });
+            config.patterns.splice(rootIndices[0], 0, group);
+            selectedPaths.clear();
+            renderTable();
+        }
+
+        function ungroup(gIdx) {
+            let group = config.patterns[gIdx];
+            config.patterns.splice(gIdx, 1, ...group.patterns);
+            renderTable();
+        }
+
+        function updateGlobalChannels(val) {
+            let n = parseInt(val) || 1; config.channels = n;
+            const fixLength = (p) => {
+                while (p.state.length < n) p.state.push(0);
+                if (p.state.length > n) p.state = p.state.slice(0, n);
+            };
+            config.patterns.forEach(item => {
+                if (item.type === 'group') item.patterns.forEach(fixLength);
+                else fixLength(item);
+            });
+            renderTable();
+        }
+
+        function applyMassUpdate(type, inputId) {
+            const val = document.getElementById(inputId).value;
+            if (selectedPaths.size === 0 || val === "") return;
+            const v = parseInt(val) || 0;
+            selectedPaths.forEach(path => {
+                let p = getObjByPath(path);
+                if (type === 'duration') p.duration = v;
+                else if (type === 'flicker_amt') {
+                    if (v === 0) delete p.flicker;
+                    else { if (!p.flicker) p.flicker = {}; p.flicker.amount = v; }
+                } else if (type === 'flicker_dur' && p.flicker) p.flicker.duration = v;
+            });
+            renderTable();
+        }
+
+        function createPatternRowHTML(p, path, isChild = false) {
+            const tr = document.createElement('tr');
+            tr.dataset.path = path;
+            if (isChild) tr.className = 'group-child';
+            if (selectedPaths.has(path)) tr.classList.add('selected');
+            if (isPlaying && currentPlayingPath === path) tr.classList.add('playing');
+
+            tr.onmousedown = (e) => {
+                focusedPath = path;
+                if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'button') return;
+                const isHandle = e.target.closest('.drag-handle');
+                if (isHandle && !isChild) { tr.draggable = true; }
+                else if (appMode === 'select') {
+                    isDraggingSelection = true;
+                    if (selectedPaths.has(path)) { selectedPaths.delete(path); dragTargetState = 'deselect'; }
+                    else { selectedPaths.add(path); dragTargetState = 'select'; }
+                    renderTableSelection();
+                }
+            };
+
+            tr.onmouseenter = () => {
+                if (isDraggingSelection && appMode === 'select' && dragTargetState) {
+                    if (dragTargetState === 'select') selectedPaths.add(path); else selectedPaths.delete(path);
+                    renderTableSelection();
+                }
+            };
+
+            if (!isChild) {
+                tr.ondragstart = (e) => e.dataTransfer.setData('text/plain', path);
+                tr.ondragover = (e) => e.preventDefault();
+                tr.ondrop = (e) => handleDrop(path, e.dataTransfer.getData('text/plain'));
+            }
+
+            const stateHtml = `<div class="state-blocks">${p.state.map((s, si) => `<div class="block ${s === 1 ? 'on' : ''}" onclick="toggleBlock('${path}', ${si})"></div>`).join('')}</div>`;
+
+            tr.innerHTML = `
+            <td class="drag-handle"><img src="assets/drag-handle.svg" class="icon icon-sm" style="${isChild ? 'display:none' : ''}"></td>
+            <td>${stateHtml}</td>
+            <td><input type="number" value="${p.duration}" onfocus="focusedPath='${path}'" oninput="updateVal('${path}', 'duration', this.value)"></td>
+            <td><input type="number" value="${p.flicker?.amount || ''}" onfocus="focusedPath='${path}'" oninput="updateFlicker('${path}', 'amount', this.value)"></td>
+            <td><input type="number" value="${p.flicker?.duration || ''}" onfocus="focusedPath='${path}'" oninput="updateFlicker('${path}', 'duration', this.value)"></td>
+            <td>
+                <div class="actions-cell">
+                    <button class="btn-icon" onclick="shiftPattern('${path}', 'left')"><img src="assets/shift-left.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="shiftPattern('${path}', 'right')"><img src="assets/shift-right.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="mirrorPattern('${path}')"><img src="assets/mirror.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="invertRow('${path}')"><img src="assets/invert.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="duplicateRow('${path}')"><img src="assets/duplicate.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="removePattern('${path}')"><img src="assets/delete.svg" class="icon icon-sm"></button>
+                </div>
+            </td>`;
+            return tr;
+        }
+
+        function renderTable() {
+            const list = document.getElementById('pattern-list');
+            list.innerHTML = '';
+            config.patterns.forEach((item, gIdx) => {
+                if (item.type === 'group') {
+                    const gTr = document.createElement('tr');
+                    gTr.className = 'group-header';
+                    gTr.innerHTML = `<td></td><td colspan="4" style="padding-left:10px;"><span class="label-text" style="color:var(--accent);">PATTERN GROUP</span><span style="margin-left: 15px; font-size:10px; color:#888;">REPEAT:</span><input type="number" class="group-repeat-input" value="${item.repeat}" onchange="config.patterns[${gIdx}].repeat = parseInt(this.value); updateJsonPanel()"></td><td><button class="warn btn-compact" style="padding:4px 8px; font-size:10px;" onclick="ungroup(${gIdx})">UNGROUP</button></td>`;
+                    list.appendChild(gTr);
+                    item.patterns.forEach((child, pIdx) => list.appendChild(createPatternRowHTML(child, `${gIdx}-${pIdx}`, true)));
+                } else {
+                    list.appendChild(createPatternRowHTML(item, `${gIdx}`, false));
+                }
+            });
+            renderTableSelection();
+            updateJsonPanel();
+        }
+
+        function renderTableSelection() {
+            const count = selectedPaths.size;
+            document.querySelectorAll('#pattern-list tr').forEach((tr) => { if (tr.dataset.path) tr.classList.toggle('selected', selectedPaths.has(tr.dataset.path)); });
+            document.getElementById('del-count-text').innerText = count > 0 ? `(${count})` : "";
+            ['mass-dur', 'mass-flk-amt', 'mass-flk-dur', 'mass-btn-dur', 'mass-btn-flk', 'mass-btn-fdur', 'sel-clone', 'sel-invert', 'sel-mirror', 'sel-left', 'sel-right', 'sel-clear', 'sel-delete', 'sel-group'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.disabled = count === 0;
+            });
+        }
+
+        function clearSelection() { selectedPaths.clear(); renderTableSelection(); }
+        function togglePlayback() { if (isPlaying) stopStrobe(); else playStrobe(); }
+
+        async function playStrobe() {
+            if (isPlaying) return; isPlaying = true; abortController = new AbortController();
+            const btn = document.getElementById('main-playback-btn');
+            btn.className = 'stop-btn';
+            document.getElementById('playback-text').innerText = 'STOP';
+            document.getElementById('playback-icon').src = 'assets/stop.svg';
+
+            try {
+                while (isPlaying) {
+                    if (config.patterns.length === 0) break;
+                    for (let gIdx = 0; gIdx < config.patterns.length; gIdx++) {
+                        let item = config.patterns[gIdx];
+                        if (item.type === 'group') {
+                            for (let r = 0; r < item.repeat; r++) {
+                                for (let pIdx = 0; pIdx < item.patterns.length; pIdx++) {
+                                    if (!isPlaying) break;
+                                    await playSinglePattern(item.patterns[pIdx], `${gIdx}-${pIdx}`);
+                                }
+                            }
+                        } else {
+                            if (!isPlaying) break;
+                            await playSinglePattern(item, `${gIdx}`);
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+
+        async function playSinglePattern(p, path) {
+            currentPlayingPath = path;
+            if (showSteps) renderTable();
+            if (p.flicker && p.flicker.amount > 0) {
+                const flickDuration = p.flicker.duration || p.duration;
+                const step = flickDuration / (p.flicker.amount * 2);
+                for (let f = 0; f < p.flicker.amount * 2; f++) {
+                    if (!isPlaying) break;
+                    renderLights(f % 2 === 0 ? p.state : new Array(config.channels).fill(0));
+                    await sleep(step, abortController.signal);
+                }
+            } else { renderLights(p.state); await sleep(p.duration, abortController.signal); }
+        }
+
+        function stopStrobe() {
+            isPlaying = false; abortController?.abort(); currentPlayingPath = null;
+            const btn = document.getElementById('main-playback-btn');
+            btn.className = 'play-btn';
+            document.getElementById('playback-text').innerText = 'PLAY';
+            document.getElementById('playback-icon').src = 'assets/play.svg';
+            renderLights(new Array(config.channels).fill(0));
+            renderTable();
+        }
+
+        function deletePaths(pathsArray) {
+            pathsArray.sort((a, b) => {
+                let [aG, aP] = a.split('-').map(Number);
+                let [bG, bP] = b.split('-').map(Number);
+                if (aG !== bG) return bG - aG;
+                return (aP !== undefined && bP !== undefined) ? bP - aP : 0;
+            });
+            pathsArray.forEach(path => {
+                let [gIdx, pIdx] = path.split('-');
+                if (pIdx === undefined) config.patterns.splice(Number(gIdx), 1);
+                else config.patterns[Number(gIdx)].patterns.splice(Number(pIdx), 1);
+            });
+            config.patterns = config.patterns.filter(p => p.type !== 'group' || p.patterns.length > 0);
+        }
+
+        function invertSelected() { selectedPaths.forEach(path => invertRow(path, false)); renderTable(); }
+        function mirrorSelected() { selectedPaths.forEach(path => mirrorPattern(path, false)); renderTable(); }
+        function shiftSelected(dir) { selectedPaths.forEach(path => shiftPattern(path, dir, false)); renderTable(); }
+
+        function duplicateSelected() {
+            if (selectedPaths.size === 0) return;
+            let sortedPaths = Array.from(selectedPaths).sort((a, b) => {
+                let [aG, aP] = a.split('-').map(Number);
+                let [bG, bP] = b.split('-').map(Number);
+                if (aG !== bG) return aG - bG;
+                return (aP || 0) - (bP || 0);
+            });
+            let clones = sortedPaths.map(path => JSON.parse(JSON.stringify(getObjByPath(path))));
+            let lastPath = sortedPaths[sortedPaths.length - 1];
+            let lastRootIdx = parseInt(lastPath.split('-')[0]);
+
+            config.patterns.splice(lastRootIdx + 1, 0, ...clones);
+            selectedPaths.clear();
+            clones.forEach((_, i) => { selectedPaths.add((lastRootIdx + 1 + i).toString()); });
+            renderTable();
+        }
+
+        function deleteSelected() { deletePaths(Array.from(selectedPaths)); selectedPaths.clear(); renderTable(); }
+
+        function addPattern() { config.patterns.push({ state: new Array(config.channels).fill(0), duration: 500 }); renderTable(); }
+        function duplicateRow(path) {
+            if (!path) return;
+            let arr = getArrByPath(path); let idx = getIdxByPath(path);
+            arr.splice(idx + 1, 0, JSON.parse(JSON.stringify(arr[idx]))); renderTable();
+        }
+        function invertRow(path, render = true) { let p = getObjByPath(path); p.state = p.state.map(s => s === 1 ? 0 : 1); if (render) renderTable(); }
+        function removePattern(path) { deletePaths([path]); renderTable(); }
+        function clearAllPatterns() { if (confirm("Delete ALL rows?")) { config.patterns = []; selectedPaths.clear(); renderTable(); } }
+
+        function toggleBlock(path, si) { if (appMode !== 'edit') return; let p = getObjByPath(path); p.state[si] = p.state[si] === 1 ? 0 : 1; renderTable(); }
+        function shiftPattern(path, dir, render = true) { let p = getObjByPath(path); dir === 'left' ? p.state.push(p.state.shift()) : p.state.unshift(p.state.pop()); if (render) renderTable(); }
+        function mirrorPattern(path, render = true) { let p = getObjByPath(path); p.state.reverse(); if (render) renderTable(); }
+
+        function updateVal(path, k, v) { getObjByPath(path)[k] = parseInt(v) || 0; updateJsonPanel(); }
+        function updateFlicker(path, k, v) {
+            let p = getObjByPath(path);
+            if (!p.flicker) p.flicker = {}; p.flicker[k] = parseInt(v) || 0;
+            if (k === 'amount' && !p.flicker.amount) delete p.flicker;
+            updateJsonPanel();
+        }
+
+        function handleDrop(targetPath, draggedPath) {
+            if (targetPath.includes('-') || draggedPath.includes('-')) return;
+            const targetIdx = parseInt(targetPath); const draggedIdx = parseInt(draggedPath);
+            const item = config.patterns.splice(draggedIdx, 1)[0];
+            config.patterns.splice(draggedIdx < targetIdx ? targetIdx - 1 : targetIdx, 0, item);
+            renderTable();
+        }
+
+        function updateJsonPanel() {
+            const el = document.getElementById('json-input');
+            if (document.activeElement !== el) {
+                const json = JSON.stringify(config, null, 2);
+                el.value = json.replace(/"state":\s*\[\s+([\s\S]*?)\s+\]/g, (m, p) => `"state": [${p.split(',').map(s => s.trim()).filter(s => s !== "").join(', ')}]`);
+            }
+            localStorage.setItem('strobe_config_v4', JSON.stringify(config));
+        }
+
+        function handleManualJsonEdit(val) { try { const p = JSON.parse(val); if (p.patterns) { config = p; renderTable(); } } catch (e) { } }
+        const sleep = (ms, sig) => new Promise((res, rej) => { const t = setTimeout(res, ms); sig?.addEventListener('abort', () => { clearTimeout(t); rej(); }); });
+
+        function renderLights(state) { const bar = document.getElementById('light-bar'); if (bar) { bar.innerHTML = ''; state.forEach(s => { const l = document.createElement('div'); l.className = `light ${s === 1 ? 'on' : ''}`; bar.appendChild(l); }); } }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cInput = document.getElementById('global-channels');
+            if (cInput) cInput.value = config.channels;
+            renderLights(new Array(config.channels).fill(0));
+            renderTable();
+        });
+    </script>
+</body>
+
+</html>
