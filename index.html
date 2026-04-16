@@ -602,22 +602,22 @@
                     <div class="toolbar-group">
                         <button id="main-playback-btn" class="play-btn" title="Toggle Playback (Space)"
                             onclick="togglePlayback()">
-                            <img src="/assets/play.svg" class="icon" id="playback-icon"
+                            <img src="assets/play.svg" class="icon" id="playback-icon"
                                 onerror="this.style.display='none'"> <span id="playback-text">PLAY</span>
                         </button>
                     </div>
                     <div class="toolbar-group">
                         <button id="btn-undo" class="btn-compact" title="Undo (Ctrl+Z)" onclick="undoState()"
-                            disabled><img src="/assets/undo.svg" class="icon"></button>
+                            disabled><img src="assets/undo.svg" class="icon"></button>
                         <button id="btn-redo" class="btn-compact" title="Redo (Ctrl+Y)" onclick="redoState()"
-                            disabled><img src="/assets/redo.svg" class="icon"></button>
+                            disabled><img src="assets/redo.svg" class="icon"></button>
                     </div>
                     <div style="flex-grow: 1"></div>
                     <button id="btn-toggle-steps" title="Toggle Steps (Ctrl+T)" onclick="toggleStepIndicator()">STEPS:
                         ON</button>
-                    <button onclick="addPattern()" title="Add Row (A)"><img src="/assets/plus.svg" class="icon">
+                    <button onclick="addPattern()" title="Add Row (A)"><img src="assets/plus.svg" class="icon">
                         ADD</button>
-                    <button class="warn" onclick="clearAllPatterns()"><img src="/assets/delete.svg" class="icon">
+                    <button class="warn" onclick="clearAllPatterns()"><img src="assets/delete.svg" class="icon">
                         CLEAR</button>
                 </div>
 
@@ -649,20 +649,20 @@
                     </div>
                     <div class="toolbar-group">
                         <button id="sel-clone" class="btn-compact" title="Clone Selection (Ctrl+D)"
-                            onclick="duplicateSelected()"><img src="/assets/duplicate.svg" class="icon"></button>
+                            onclick="duplicateSelected()"><img src="assets/duplicate.svg" class="icon"></button>
                         <button id="sel-reverse" class="btn-compact" title="Reverse Play Order (Ctrl+R)"
-                            onclick="reverseSelectedOrder()"><img src="/assets/reverse-order.svg" class="icon"></button>
+                            onclick="reverseSelectedOrder()"><img src="assets/reverse-order.svg" class="icon"></button>
                         <button id="sel-invert" class="btn-compact" onclick="invertSelected()"><img
-                                src="/assets/invert.svg" class="icon"></button>
+                                src="assets/invert.svg" class="icon"></button>
                         <button id="sel-mirror" class="btn-compact" onclick="mirrorSelected()"><img
-                                src="/assets/mirror.svg" class="icon"></button>
+                                src="assets/mirror.svg" class="icon"></button>
                         <button id="sel-left" class="btn-compact" onclick="shiftSelected('left')"><img
-                                src="/assets/shift-left.svg" class="icon"></button>
+                                src="assets/shift-left.svg" class="icon"></button>
                         <button id="sel-right" class="btn-compact" onclick="shiftSelected('right')"><img
-                                src="/assets/shift-right.svg" class="icon"></button>
+                                src="assets/shift-right.svg" class="icon"></button>
                     </div>
                     <div style="flex-grow: 1"></div>
-                    <button id="sel-delete" class="warn" onclick="deleteSelected()"><img src="/assets/delete.svg"
+                    <button id="sel-delete" class="warn" onclick="deleteSelected()"><img src="assets/delete.svg"
                             class="icon"> <span id="del-count-text"></span></button>
                 </div>
             </div>
@@ -698,7 +698,7 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="/assets/toastify.js"></script>
+    <script type="text/javascript" src="assets/toastify.js"></script>
     <script>
         let config = { "channels": 10, "patterns": [] };
         let appMode = 'edit'; let showSteps = true; let selectedPaths = new Set();
@@ -936,7 +936,7 @@
             const stateHtml = `<div class="state-blocks">${p.state.map((s, si) => `<div class="block ${s === 1 ? 'on' : ''}" onclick="toggleBlock('${path}', ${si})"></div>`).join('')}</div>`;
 
             tr.innerHTML = `
-            <td class="drag-handle"><img src="/assets/drag-handle.svg" class="icon icon-sm"></td>
+            <td class="drag-handle"><img src="assets/drag-handle.svg" class="icon icon-sm"></td>
             <td>${stateHtml}</td>
             <td><input type="number" value="${p.duration}" onfocus="focusedPath='${path}'" oninput="updateVal('${path}', 'duration', this.value)"></td>
             <td><input type="number" value="${p.flicker?.amount || ''}" onfocus="focusedPath='${path}'" oninput="updateFlicker('${path}', 'amount', this.value)"></td>
@@ -945,12 +945,12 @@
             <td><input type="number" value="${p.fade?.out || ''}" onfocus="focusedPath='${path}'" oninput="updateFade('${path}', 'out', this.value)"></td>
             <td>
                 <div class="actions-cell">
-                    <button class="btn-icon" onclick="shiftPattern('${path}', 'left')"><img src="/assets/shift-left.svg" class="icon icon-sm"></button>
-                    <button class="btn-icon" onclick="shiftPattern('${path}', 'right')"><img src="/assets/shift-right.svg" class="icon icon-sm"></button>
-                    <button class="btn-icon" onclick="mirrorPattern('${path}')"><img src="/assets/mirror.svg" class="icon icon-sm"></button>
-                    <button class="btn-icon" onclick="invertRow('${path}')"><img src="/assets/invert.svg" class="icon icon-sm"></button>
-                    <button class="btn-icon" onclick="duplicateRow('${path}')"><img src="/assets/duplicate.svg" class="icon icon-sm"></button>
-                    <button class="btn-icon" onclick="removePattern('${path}')"><img src="/assets/delete.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="shiftPattern('${path}', 'left')"><img src="assets/shift-left.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="shiftPattern('${path}', 'right')"><img src="assets/shift-right.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="mirrorPattern('${path}')"><img src="assets/mirror.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="invertRow('${path}')"><img src="assets/invert.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="duplicateRow('${path}')"><img src="assets/duplicate.svg" class="icon icon-sm"></button>
+                    <button class="btn-icon" onclick="removePattern('${path}')"><img src="assets/delete.svg" class="icon icon-sm"></button>
                 </div>
             </td>`;
             return tr;
@@ -972,7 +972,7 @@
                     gTr.ondragstart = (e) => { gTr.classList.add('dragging'); e.dataTransfer.setData('text/plain', `${gIdx}`); e.dataTransfer.effectAllowed = "move"; };
                     gTr.ondragover = (e) => e.preventDefault(); gTr.ondrop = (e) => handleDrop(`${gIdx}`, e.dataTransfer.getData('text/plain'));
                     gTr.innerHTML = `
-                    <td class="drag-handle"><img src="/assets/drag-handle.svg" class="icon icon-sm"></td>
+                    <td class="drag-handle"><img src="assets/drag-handle.svg" class="icon icon-sm"></td>
                     <td colspan="6" style="padding-left:10px;">
                         <span class="label-text" style="color:var(--accent);">PATTERN GROUP</span><span style="margin-left: 15px; font-size:10px; color:#888;">REPEAT:</span>
                         <input type="number" class="group-repeat-input" value="${item.repeat}" onchange="config.patterns[${gIdx}].repeat = parseInt(this.value); updateJsonPanel()">
@@ -981,9 +981,9 @@
                     <td>
                         <div class="actions-cell">
                              <button class="btn-icon btn-solo ${soloGroupIdx === gIdx ? 'active' : ''}" onclick="toggleSolo(${gIdx})">SOLO</button>
-                             <button class="btn-icon" onclick="invertGroup(${gIdx})"><img src="/assets/invert.svg" class="icon icon-sm"></button>
-                             <button class="btn-icon" onclick="duplicateGroup(${gIdx})"><img src="/assets/duplicate.svg" class="icon icon-sm"></button>
-                             <button class="btn-icon" onclick="removePattern('${gIdx}')"><img src="/assets/delete.svg" class="icon icon-sm"></button>
+                             <button class="btn-icon" onclick="invertGroup(${gIdx})"><img src="assets/invert.svg" class="icon icon-sm"></button>
+                             <button class="btn-icon" onclick="duplicateGroup(${gIdx})"><img src="assets/duplicate.svg" class="icon icon-sm"></button>
+                             <button class="btn-icon" onclick="removePattern('${gIdx}')"><img src="assets/delete.svg" class="icon icon-sm"></button>
                              <button class="warn btn-compact" onclick="ungroup(${gIdx})">UNGROUP</button>
                         </div>
                     </td>`;
